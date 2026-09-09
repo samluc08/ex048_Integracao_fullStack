@@ -3,3 +3,4 @@ node_modules/
 uploads/
 *.db
 dist/
+package-lock.json
