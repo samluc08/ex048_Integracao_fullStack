@@ -12,9 +12,68 @@
 
   <script>
     const api = 'http://localhost:3000/api/tarefas';
-    // TODO: ao carregar a página, busca as tarefas com fetch e exibe na lista
-    // TODO: ao submeter o formulário, envia POST com { titulo } e atualiza a lista
-    // TODO: erros de rede/API devem ser exibidos no elemento #erro
+    const lista = document.getElementById('lista');
+    const erroEl = document.getElementById('erro');
+    const form = document.getElementById('form');
+    const inputTitulo = document.getElementById('titulo');
+
+    function mostrarErro(msg) {
+      erroEl.textContent = msg;
+    }
+
+    function limparErro() {
+      erroEl.textContent = '';
+    }
+
+    function renderTarefas(tarefas) {
+      lista.innerHTML = '';
+      tarefas.forEach(t => {
+        const li = document.createElement('li');
+        li.textContent = t.titulo;
+        lista.appendChild(li);
+      });
+    }
+
+    async function carregarTarefas() {
+      try {
+        const resp = await fetch(api);
+        if (!resp.ok) {
+          throw new Error(`Erro ao buscar tarefas: ${resp.status}`);
+        }
+        const tarefas = await resp.json();
+        renderTarefas(tarefas);
+        limparErro();
+      } catch (err) {
+        mostrarErro(`Falha ao carregar tarefas: ${err.message}`);
+      }
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const titulo = inputTitulo.value.trim();
+      if (!titulo) return;
+
+      try {
+        const resp = await fetch(api, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ titulo })
+        });
+
+        if (!resp.ok) {
+          const dados = await resp.json().catch(() => ({}));
+          throw new Error(dados.erro || `Erro ao adicionar tarefa: ${resp.status}`);
+        }
+
+        inputTitulo.value = '';
+        limparErro();
+        await carregarTarefas();
+      } catch (err) {
+        mostrarErro(`Falha ao adicionar tarefa: ${err.message}`);
+      }
+    });
+
+    carregarTarefas();
   </script>
 </body>
 </html>
